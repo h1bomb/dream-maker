@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app:*)",
+      "Bash(npm install:*)",
+      "Bash(npx:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run lint)",
+      "Bash(npm search:*)",
+      "Bash(npm run build:*)",
+      "Bash(find:*)",
+      "Bash(npm run dev:*)",
+      "Bash(rm:*)",
+      "Bash(pkill:*)",
+      "Bash(ls:*)",
+      "Bash(npm info:*)",
+      "Bash(curl:*)",
+      "Bash(sqlite3:*)",
+      "Bash(node:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}
