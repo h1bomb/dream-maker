@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Settings, Home } from 'lucide-react';
 
-import { type SDKMessage } from "@anthropic-ai/claude-code";
+import { type SDKMessage } from "@/lib/agent-sdk";
 
 interface Message {
   id: string;

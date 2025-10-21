@@ -3,14 +3,14 @@
 本文面向参与 Dream Maker 的产品、前端、后端与基础设施工程师，系统性阐述项目的目标、架构、核心模块、数据模型、接口协议、运行机制、质量保障与后续演进规划，便于高效协作与快速迭代。
 
 - 更新时间：2025-10-21
-- 技术栈：Next.js 15（App Router）+ React 19 + TypeScript + Tailwind + shadcn/ui + Anthropic Claude Code SDK
+- 技术栈：Next.js 15（App Router）+ React 19 + TypeScript + Tailwind + shadcn/ui + Anthropic Claude Agent SDK（通过适配器，优先新包，回退老包）
 - 运行时：Node.js（使用 Next.js Node runtime；依赖 Node 标准库、child_process、fs、sqlite3）
 
 ---
 
 ## 1. 项目目标与价值
 
-Dream Maker 是一个围绕 Claude Code SDK 的 AI Agent 平台：
+Dream Maker 是一个围绕 Anthropic Agent SDK 的 AI Agent 平台（通过适配器兼容 Claude Code SDK）：
 - 允许用户用自然语言创建/迭代 Web 应用或代码项目；
 - 以多轮对话驱动 Agent 在本地工作目录内生成/修改文件；
 - 在浏览器侧提供工作空间（Workspace）体验：聊天、历史记录、代码浏览、站点预览。
@@ -32,7 +32,7 @@ Dream Maker 是一个围绕 Claude Code SDK 的 AI Agent 平台：
   - 通用 UI：shadcn/ui + Tailwind，暗色主题变量
 
 - 服务层（Next.js Route Handlers）：
-  - Chat 调用 Claude Code SDK（封装于 src/lib/claude.ts）
+  - Chat 通过适配器调用 Anthropic Agent SDK（封装于 src/lib/claude.ts，经由 src/lib/agent-sdk.ts 选择新/旧包）
   - Apps CRUD、Messages 存取
   - 文件树/文件内容读取
   - 本地预览服务（child_process）生命周期管理
@@ -42,7 +42,7 @@ Dream Maker 是一个围绕 Claude Code SDK 的 AI Agent 平台：
   - 应用工作目录：~/.dream-maker/<app-id>/（Claude 写入/修改文件的地方）
 
 - 第三方 SDK：
-  - @anthropic-ai/claude-code v1.0.61（无需配置 API Key）
+  - Anthropic Agent SDK（优先 @anthropic-ai/claude-agent-sdk，回退 @anthropic-ai/claude-code；无需配置 API Key）
 
 数据与调用流（典型创建流程）：
 1) 用户在首页输入需求 → POST /api/apps 创建 App，并生成工作目录；
@@ -130,12 +130,13 @@ SQLite 数据库位于 ~/.dream-maker/dream-maker.db，首次通过 /api/init �
 
 ### 5.1 ClaudeClient（src/lib/claude.ts）
 
-- 作用：对 @anthropic-ai/claude-code 的 query() 进行封装，提供 createMessage 与 streamMessage 两种模式；
+- 作用：通过适配器（src/lib/agent-sdk.ts）封装 query()，优先使用 @anthropic-ai/claude-agent-sdk，若不可用回退到 @anthropic-ai/claude-code；提供 createMessage 与 streamMessage 两种模式；
 - 关键选项：
   - maxTurns：默认 100（界面默认 3～10 可覆盖）
   - permissionMode：固定 'bypassPermissions'（允许 SDK 工具直接操作本地文件）
   - cwd：设置为 App 的工作目录；若设置，则会在 prompt 前添加中文引导，强调在该目录内创建文件
   - continue：是否续写对话（SDK 选项）
+  - 若使用 Agent SDK：显式设置 systemPrompt 为 { type: 'preset', preset: 'claude_code' }，并禁用 settingSources（[]）以保持可预测性
 - 处理流程：
   - for await 循环消费 SDK 响应流，将每条 SDKMessage 推入数组；
   - 控制台记录关键信息，便于前端解析与调试；
@@ -285,7 +286,7 @@ SQLite 数据库位于 ~/.dream-maker/dream-maker.db，首次通过 /api/init �
 
 - Next.js 开发模式开启 Turbo；
 - 组件按需渲染，文件树过滤隐藏与 node_modules；
-- Claude SDK 支持流式（streamMessage 已预留），后续可接入前端流式渲染；
+- Agent SDK 支持流式（streamMessage 已预留），后续可接入前端流式渲染；
 - 本地 SQLite 足以覆盖单机体验；后续可抽象 DB 层支持 Postgres 等；
 - 预览服务端口从 3001 顺延，避免与主站 3000 冲突。
 
@@ -365,7 +366,7 @@ SQLite 数据库位于 ~/.dream-maker/dream-maker.db，首次通过 /api/init �
 
 - 权限模型：是否保持 bypassPermissions（本地便利）或引入显式白名单？
 - 运行环境：是否支持跨平台（Windows/Mac/Linux）的最小依赖打包？
-- SDK 升级：关注 Claude Code SDK 版本变更对消息结构/工具接口的影响。
+- SDK 升级：关注 Anthropic Agent SDK 版本变更及与 Claude Code SDK 的兼容性（消息结构/工具接口变化）。
 
 ---
 
