@@ -11,6 +11,10 @@ An AI Agent Platform powered by Claude Code SDK, built with Next.js, TypeScript,
 - 🔄 Multi-turn Conversations
 - ⚙️ Configurable Max Turns
 
+## Project Design Document
+
+- Detailed design documentation (Chinese): docs/PROJECT_DESIGN.md
+
 ## Getting Started
 
 ### Prerequisites

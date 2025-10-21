@@ -26,7 +26,7 @@ npm run start      # Start production server
 ### Core Technologies
 - **Frontend**: Next.js 15 with App Router, TypeScript, Tailwind CSS
 - **UI Components**: shadcn/ui (New York variant) with Radix UI primitives
-- **AI Integration**: Anthropic Claude Code SDK v1.0.61
+- **AI Integration**: Anthropic Claude Agent SDK (via adapter; falls back to Claude Code SDK if unavailable)
 - **Styling**: CSS variables with dark mode support
 
 ### Key Directories
@@ -44,19 +44,20 @@ src/
     └── utils.ts           # cn() utility for class merging
 ```
 
-## Claude Code SDK Integration
+## Agent SDK Integration
 
 ### Key Pattern
-The app uses a wrapper pattern around the Claude Code SDK:
+The app uses a wrapper pattern around the Anthropic Agent SDK via an internal adapter:
 
 1. **ClaudeClient** (`src/lib/claude.ts`): Wraps the SDK's `query()` function
-2. **API Route** (`src/app/api/chat/route.ts`): Handles HTTP requests to Claude
-3. **Chat Interface**: Processes SDK messages and manages UI state
+2. **Adapter** (`src/lib/agent-sdk.ts`): Prefers `@anthropic-ai/claude-agent-sdk`, falls back to `@anthropic-ai/claude-code`
+3. **API Route** (`src/app/api/chat/route.ts`): Handles HTTP requests to Claude
+4. **Chat Interface**: Processes SDK messages and manages UI state
 
 ### SDK Usage Pattern
 ```typescript
 // Core pattern used throughout the app
-import { query, type SDKMessage } from "@anthropic-ai/claude-code";
+import { query, type SDKMessage } from "@/lib/agent-sdk";
 
 for await (const message of query({
   prompt,
@@ -70,7 +71,7 @@ for await (const message of query({
 ### Message Flow
 1. User input → ChatInterface component
 2. HTTP POST → `/api/chat` endpoint
-3. ClaudeClient → Claude Code SDK query()
+3. ClaudeClient → Agent SDK query() via adapter
 4. SDKMessage[] array returned and processed
 5. UI updated with parsed message content
 
@@ -121,12 +122,12 @@ All components use shadcn/ui patterns:
 ## Environment Setup
 
 ### Required Variables
-The Claude Code SDK handles authentication automatically, so no API keys are required in environment variables.
+The Anthropic Agent SDK handles authentication automatically, so no API keys are required in environment variables.
 
 ### Optional Variables (`.env.example`)
 ```
 NEXT_PUBLIC_APP_NAME=Dream Maker
-NEXT_PUBLIC_APP_DESCRIPTION=AI Agent Platform powered by Claude Code SDK
+NEXT_PUBLIC_APP_DESCRIPTION=AI Agent Platform powered by Claude Agent SDK
 ```
 
 ## Development Patterns
@@ -189,7 +190,7 @@ if (!content) {
 
 ### Dependencies
 - **Core**: Next.js 15, React 19, TypeScript 5
-- **SDK**: @anthropic-ai/claude-code v1.0.61
+- **SDK**: Anthropic Agent SDK (adapter prefers `@anthropic-ai/claude-agent-sdk`, falls back to `@anthropic-ai/claude-code`)
 - **UI**: shadcn/ui components with Radix UI primitives
 - **Styling**: Tailwind CSS with class-variance-authority
 

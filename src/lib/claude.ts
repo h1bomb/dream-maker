@@ -1,4 +1,4 @@
-import { query, type SDKMessage } from "@anthropic-ai/claude-code";
+import { query, type SDKMessage, isAgentSDK } from "@/lib/agent-sdk";
 
 export interface ClaudeOptions {
   maxTurns?: number;
@@ -16,6 +16,13 @@ export class ClaudeClient {
         maxTurns: options.maxTurns || 100,
         permissionMode: 'bypassPermissions',
       };
+
+      // If running with the new Agent SDK, apply explicit systemPrompt preset to keep Claude Code behavior
+      if (isAgentSDK) {
+        queryOptions.systemPrompt = { type: 'preset', preset: 'claude_code' };
+        // Keep behavior deterministic (do not load settings from filesystem by default)
+        queryOptions.settingSources = [];
+      }
 
       if (options.cwd) {
         queryOptions.cwd = options.cwd;
@@ -56,6 +63,12 @@ export class ClaudeClient {
         maxTurns: options.maxTurns || 100,
         permissionMode: 'bypassPermissions',
       };
+
+      // If running with the new Agent SDK, align behavior explicitly
+      if (isAgentSDK) {
+        queryOptions.systemPrompt = { type: 'preset', preset: 'claude_code' };
+        queryOptions.settingSources = [];
+      }
 
       if (options.cwd) {
         queryOptions.cwd = options.cwd;
